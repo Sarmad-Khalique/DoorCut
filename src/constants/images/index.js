@@ -1,0 +1,10 @@
+export {default as Barber} from '../../../assets/images/barber.png';
+export {default as BarberActive} from '../../../assets/images/barber-active.png';
+export {default as Client} from '../../../assets/images/client.png';
+export {default as ClientActive} from '../../../assets/images/client-active.png';
+export {default as OnboardingImage1} from '../../../assets/images/onboarding-1.png';
+export {default as OnboardingImage2} from '../../../assets/images/onboarding-2.png';
+export {default as OnboardingImage3} from '../../../assets/images/onboarding-3.png';
+export {default as ArrowLeftPrimary} from '../../../assets/images/arrow-left-primary.png';
+export {default as ArrowRightPrimary} from '../../../assets/images/arrow-right-primary.png';
+export {default as ArrowLeftSecondary} from '../../../assets/images/arrow-left-secondary.png';
