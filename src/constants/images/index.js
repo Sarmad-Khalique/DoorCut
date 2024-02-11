@@ -8,3 +8,4 @@ export {default as OnboardingImage3} from '../../../assets/images/onboarding-3.p
 export {default as ArrowLeftPrimary} from '../../../assets/images/arrow-left-primary.png';
 export {default as ArrowRightPrimary} from '../../../assets/images/arrow-right-primary.png';
 export {default as ArrowLeftSecondary} from '../../../assets/images/arrow-left-secondary.png';
+export {default as LocationSVG} from '../../../assets/images/location.png';

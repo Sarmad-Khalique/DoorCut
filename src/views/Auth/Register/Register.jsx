@@ -11,11 +11,14 @@ import {
 import FormInput from '../../../components/shared/FormInput';
 import {COLORS} from '../../../theme';
 import Button from '../../../components/shared/Button';
+import {useNavigation} from '@react-navigation/native';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
@@ -46,10 +49,11 @@ const Register = () => {
       />
       <Button
         onClick={() =>
-          Alert.alert(
-            'Sign Up',
-            `Name: ${name}\nEmail: ${email}\nPassword: ${password}`,
-          )
+          navigation.navigate('Verify', {
+            email,
+            name,
+            password,
+          })
         }
         btnStyles={{
           marginTop: 20,

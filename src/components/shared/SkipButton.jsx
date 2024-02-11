@@ -25,7 +25,7 @@ export default SkipButton;
 
 const styles = StyleSheet.create({
   container: {
-    height: '5%',
+    height: '10%',
     width: '100%',
     position: 'absolute',
     top: 0,

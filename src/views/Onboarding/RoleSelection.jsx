@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   Touchable,
@@ -17,7 +18,7 @@ const RoleSelection = () => {
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      <View style={styles.mainContent}>
+      <ScrollView style={styles.mainContent}>
         <View style={styles.header}>
           <Text style={styles.heading}>Who you are</Text>
           <Text style={styles.subHeading}>
@@ -77,7 +78,7 @@ const RoleSelection = () => {
             style={styles.image}
           />
         </TouchableOpacity>
-      </View>
+      </ScrollView>
       <View style={styles.buttonView}>
         <Button onClick={() => navigation.navigate('Login')}>Continue</Button>
       </View>

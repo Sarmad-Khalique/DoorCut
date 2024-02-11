@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
+import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {COLORS} from '../../theme';
 import Skip from '../../components/shared/SkipButton';
 import StepProgress from './StepProgress';
@@ -16,13 +16,15 @@ const OnboardingScreen = () => {
   ) : (
     <View style={styles.container}>
       <Skip onClick={() => setCurrentStep(3)} />
-      {currentStep === 0 ? (
-        <OnboardingPrimary />
-      ) : currentStep === 1 ? (
-        <OnboardingSecondary />
-      ) : (
-        <OnboardingTertiary />
-      )}
+      <ScrollView>
+        {currentStep === 0 ? (
+          <OnboardingPrimary />
+        ) : currentStep === 1 ? (
+          <OnboardingSecondary />
+        ) : (
+          <OnboardingTertiary />
+        )}
+      </ScrollView>
       <StepProgress currentStep={currentStep} setCurrentStep={setCurrentStep} />
     </View>
   );
