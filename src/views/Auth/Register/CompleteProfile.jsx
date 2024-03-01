@@ -1,5 +1,6 @@
-import React, {useContext, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -7,57 +8,166 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import FormInput from '../../../components/shared/FormInput';
 import {COLORS} from '../../../theme';
-import Button from '../../../components/shared/Button';
 import {useNavigation} from '@react-navigation/native';
-import {ArrowLeftSecondary} from '../../../constants';
-import {LocationContext} from '../../../context/location/location.provider';
-import AntDesignIcons from 'react-native-vector-icons/AntDesign';
-import FeatherIcons from 'react-native-vector-icons/Feather';
+import {ArrowLeftSecondary, LocationSearch} from '../../../constants';
+import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
+import FormInput from '../../../components/shared/FormInput';
+import Geolocation from '@react-native-community/geolocation';
+import {LoadingContext} from '../../../context/loading/loading.provider';
+import WithLoader from '../../../components/HOC/WithLoader';
+import api from '../../../config';
 
-const CompleteProfile = () => {
-  const {location, setLocation} = useContext(LocationContext);
-  const [place, setPlace] = useState('');
+const CompleteProfile = ({route}) => {
+  const {userId, phoneNumber, gender, image} = route.params || {};
+  const [place, setPlace] = useState(null);
+  const [address, setAddress] = useState('');
+  const {setLoading} = React.useContext(LoadingContext);
   const navigation = useNavigation();
 
+  const requestAuthorization = () => {
+    setLoading(true);
+    Geolocation.requestAuthorization(
+      _ => {
+        Geolocation.getCurrentPosition(
+          position => {
+            setPlace({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            setLoading(false);
+          },
+          error => {
+            setLoading(false);
+            console.log('Error: ', error);
+            Alert.alert('Error', 'Failed to get location');
+          },
+          {enableHighAccuracy: true},
+        );
+      },
+      err => {
+        setLoading(false);
+        console.log('Err ', err);
+        Alert.alert('Error', 'Failed to get location');
+      },
+    );
+  };
+
+  const postClientProfile = async () => {
+    setLoading(true);
+    try {
+      console.log('Data: ', {
+        userId,
+        phoneNumber,
+        genderId: gender === 'Male' ? 1 : 2,
+        address,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        image,
+      });
+      const res = await api.post('/clientProfile/save/', {
+        userId,
+        phoneNumber,
+        genderId: gender === 'Male' ? 1 : 2,
+        address,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        image,
+      });
+
+      if (res.data.httpStatusCode !== 200) {
+        console.log(res.data);
+        Alert.alert('Error', res.data.message);
+        return;
+      }
+      navigation.navigate('Login');
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Error', 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (place) {
+      postClientProfile();
+    }
+  }, [place, address]);
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => navigation.goBack()}>
-        <Image source={ArrowLeftSecondary} />
-      </TouchableOpacity>
-      <Text style={styles.heading}>Complete Your Profile</Text>
-      {/* TextInput with a search icon at start and cancel icon at end */}
-      <View>
-        <TextInput
-          style={{
-            height: 40,
-            borderColor: 'gray',
-            borderWidth: 1,
-            borderRadius: 10,
-            padding: 10,
-            marginTop: 20,
-            paddingHorizontal: 40,
-          }}
-          placeholder="Search"
-          onChangeText={text => setPlace(text)}
-          value={place}
-        />
-        <AntDesignIcons
-          name="search1"
-          size={20}
-          color={COLORS.textSecondary}
-          style={styles.icon}
-        />
+    <WithLoader>
+      <View style={styles.container}>
         <TouchableOpacity
-          style={{position: 'absolute', top: 30, right: 10}}
-          onPress={() => setPlace('')}>
-          <FeatherIcons name="x-circle" size={20} color={COLORS.primary} />
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}>
+          <Image source={ArrowLeftSecondary} />
         </TouchableOpacity>
+        <Text style={styles.heading}>Complete Your Profile</Text>
+        <GooglePlacesAutocomplete
+          placeholder="Search"
+          fetchDetails={true}
+          onPress={(data, details = null) => {
+            // 'details' is provided when fetchDetails = true
+            const {
+              geometry: {
+                location: {lat, lng},
+              },
+            } = details;
+
+            setPlace({
+              latitude: lat,
+              longitude: lng,
+            });
+            setAddress(data.description);
+          }}
+          query={{
+            key: 'AIzaSyB9URJOeFOdx0ewbIfNd2XUvl-gbBrJCGA',
+            language: 'en',
+          }}
+          textInputProps={{
+            InputComp: TextInput,
+            style: {
+              borderWidth: 2,
+              borderColor: COLORS.textTertiary,
+              borderRadius: 10,
+              paddingHorizontal: 15,
+              paddingVertical: 10,
+              marginVertical: 20,
+              width: '100%',
+            },
+          }}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            top: 200,
+            zIndex: -1,
+            width: '100%',
+            alignSelf: 'center',
+          }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+            onPress={requestAuthorization}>
+            <Image source={LocationSearch} />
+            <Text
+              style={{
+                color: '#323943',
+                fontSize: 15,
+                fontFamily: 'Montserrat',
+                marginLeft: 10,
+                fontWeight: '500',
+              }}>
+              Use my current location
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </WithLoader>
   );
 };
 

@@ -1,15 +1,38 @@
-import React, {useRef, useState} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useContext, useRef, useState} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import FormInput from '../../../components/shared/FormInput';
 import {COLORS} from '../../../theme';
 import Button from '../../../components/shared/Button';
 import {useNavigation} from '@react-navigation/native';
-import PhoneInput from 'react-native-phone-input';
-import {ArrowLeftSecondary} from '../../../constants';
+import {
+  ArrowLeftSecondary,
+  CurrentLocationAccess,
+  ProfileImage,
+} from '../../../constants';
+import {launchImageLibrary} from 'react-native-image-picker';
+import useLoading from '../../../hooks/useLoading';
+import {AuthContext} from '../../../context/auth/auth.provider';
+import {LocationContext} from '../../../context/location/location.provider';
+import Geolocation from '@react-native-community/geolocation';
 
-const Profile = () => {
+const Profile = ({route}) => {
+  const {userId} = route.params || {};
   const phone = useRef(null);
   const [gender, setGender] = useState('');
+  const [userImage, setUserImage] = useState(null);
+  const [showLocationProfile, setShowLocationProfile] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const {setLocation} = useContext(LocationContext);
 
   const data = [
     {key: 'Male', value: 'Male'},
@@ -17,6 +40,50 @@ const Profile = () => {
   ];
 
   const navigation = useNavigation();
+
+  const handleSubmit = async () => {
+    if (!phone.current || !gender || !userImage) {
+      Alert.alert('Error', 'All fields are required');
+      return;
+    }
+
+    setShowLocationProfile(true);
+  };
+
+  const requestAuthorization = () => {
+    setLoadingLocation(true);
+    Geolocation.requestAuthorization(
+      _ => {
+        Geolocation.getCurrentPosition(
+          position => {
+            setLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            console.log(phone.current);
+            setLoadingLocation(false);
+            navigation.navigate('CompleteProfile', {
+              userId,
+              phoneNumber: phone.current.getValue(),
+              gender,
+              image: userImage,
+            });
+          },
+          error => {
+            setLoadingLocation(false);
+            console.log('Error: ', error);
+            Alert.alert('Error', 'Failed to get location');
+          },
+          {enableHighAccuracy: true},
+        );
+      },
+      err => {
+        setLoadingLocation(false);
+        console.log('Err ', err);
+        Alert.alert('Error', 'Failed to get location');
+      },
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -31,10 +98,37 @@ const Profile = () => {
           Don't worry, only you can see your personal data. No one else will be
           able to see it.
         </Text>
+        <TouchableOpacity
+          onPress={() => {
+            launchImageLibrary(
+              {mediaType: 'photo', includeBase64: true},
+              res => {
+                if (res.didCancel) {
+                  console.log('User cancelled image picker');
+                } else if (res.error) {
+                  console.log('Error while picking image', res.error);
+                } else {
+                  setUserImage(res.assets[0].base64);
+                }
+              },
+            );
+          }}
+          style={{
+            alignSelf: 'center',
+            marginVertical: 20,
+          }}>
+          {userImage ? (
+            <Image
+              source={{uri: `data:image/png;base64,${userImage}`}}
+              style={{width: 100, height: 100, borderRadius: 50}}
+            />
+          ) : (
+            <Image source={ProfileImage} />
+          )}
+        </TouchableOpacity>
         <FormInput
           label="Phone Number"
           initialCountry={'us'}
-          initialValue="13178675309"
           textProps={{
             placeholder: 'Enter a phone number...',
           }}
@@ -45,17 +139,55 @@ const Profile = () => {
           label="Gender"
           type="select"
           data={data}
-          value={'gender'}
+          value={gender}
           setSelected={val => setGender(val)}
         />
         <Button
-          onClick={() => navigation.navigate('Location')}
+          onClick={handleSubmit}
           btnStyles={{
             marginTop: 20,
           }}>
-          Sign Up
+          Continue
         </Button>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showLocationProfile}
+        onRequestClose={() => {
+          setShowLocationProfile(false);
+        }}>
+        <ScrollView
+          style={{flex: 1, backgroundColor: COLORS.white, padding: 20}}>
+          <Image source={CurrentLocationAccess} style={styles.image} />
+          <Text style={styles.heading}>What is your location</Text>
+          <Text style={styles.subHeading}>
+            We need to know your location in order to suggest nearby services
+          </Text>
+          {loadingLocation ? (
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          ) : (
+            <>
+              <Button onClick={() => requestAuthorization()}>
+                Allow Location Access
+              </Button>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('CompleteProfile', {
+                    userId,
+                    phoneNumber: phone.current.getValue(),
+                    gender,
+                    image: userImage,
+                  })
+                }>
+                <Text style={styles.locationInputBtn}>
+                  Enter Location Manually
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </Modal>
     </View>
   );
 };
@@ -79,7 +211,7 @@ const styles = StyleSheet.create({
   heading: {
     color: COLORS.textPrimary,
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontFamily: 'Montserrat-Bold',
     textAlign: 'center',
     lineHeight: 34,
@@ -90,10 +222,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat',
     textAlign: 'center',
     lineHeight: 24,
+    marginVertical: 10,
   },
   forgetLink: {
     color: COLORS.primary,
     textAlign: 'right',
     marginVertical: 10,
+  },
+  image: {
+    width: '90%',
+    resizeMode: 'contain',
+    marginHorizontal: '5%',
+  },
+  locationInputBtn: {
+    fontSize: 16,
+    color: COLORS.primary,
+    textAlign: 'center',
+    fontFamily: 'Montserrat-Bold',
+    fontWeight: 'bold',
+    lineHeight: 20,
+    marginVertical: 10,
+    marginBottom: 20,
   },
 });

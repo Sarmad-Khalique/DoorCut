@@ -14,40 +14,100 @@ import Button from '../../../components/shared/Button';
 import OTP from '../../../components/OTP';
 import {ArrowLeftSecondary} from '../../../constants';
 import {useNavigation} from '@react-navigation/native';
+import useLoading from '../../../hooks/useLoading';
+import axios from 'axios';
+import WithLoader from '../../../components/HOC/WithLoader';
+import {AuthContext} from '../../../context/auth/auth.provider';
 
 const Verify = ({route}) => {
-  const {email} = route.params || {};
+  const {email, name, password, userId} = route.params || {};
   const navigation = useNavigation();
+  const {setLoading} = useLoading();
+  const [otp, setOTP] = useState(['', '', '', '']);
+  const {selectedRole} = React.useContext(AuthContext);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    const config = {
+      method: 'POST',
+      url: 'https://api.doorcutapp.com/api/auth/emailVerification/',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: {
+        email: email,
+        otp: otp.join(''),
+      },
+    };
+    try {
+      const res = await axios.request(config);
+      if (res.data.httpStatusCode !== 200) {
+        Alert.alert('Error', res.data.message);
+      } else {
+        Alert.alert('Success', res.data.message, [
+          {
+            text: 'Continue',
+            onPress: () => {
+              navigation.navigate(
+                selectedRole === 'client'
+                  ? 'ProfileCompletion'
+                  : 'CompleteBarberProfile',
+                {
+                  email,
+                  name,
+                  password,
+                  userId,
+                },
+              );
+            },
+          },
+        ]);
+      }
+    } catch (err) {
+      Alert.alert('Error', err.response.data.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Image source={ArrowLeftSecondary} />
-      </TouchableOpacity>
-      <View style={styles.mainContent}>
-        <Text style={styles.heading}>Verify Code</Text>
-        <Text style={styles.subHeading}>
-          Please enter the code we just sent to email
-        </Text>
-        <Text style={{...styles.subHeading, color: COLORS.primary}}>
-          {email}
-        </Text>
-        <OTP />
-        <Text style={{...styles.subHeading, marginTop: 20}}>
-          Didn't receive OTP?
-        </Text>
-        <TouchableOpacity>
-          <Text style={styles.resendBtn}>Resend Code</Text>
+    <WithLoader>
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}>
+          <Image source={ArrowLeftSecondary} />
         </TouchableOpacity>
-        <Button
-          onClick={() => navigation.navigate('ProfileCompletion')}
-          btnStyles={{
-            marginTop: 10,
-          }}>
-          Verify
-        </Button>
+        <View style={styles.mainContent}>
+          <Text style={styles.heading}>Verify Code</Text>
+          <Text style={styles.subHeading}>
+            Please enter the code we just sent to email
+          </Text>
+          <Text
+            style={{
+              ...styles.subHeading,
+              color: COLORS.primary,
+              marginBottom: 20,
+            }}>
+            {email}
+          </Text>
+          <OTP otp={otp} setOTP={setOTP} />
+          <Text style={{...styles.subHeading, marginTop: 20}}>
+            Didn't receive OTP?
+          </Text>
+          <TouchableOpacity>
+            <Text style={styles.resendBtn}>Resend Code</Text>
+          </TouchableOpacity>
+          <Button
+            onClick={handleSubmit}
+            btnStyles={{
+              marginTop: 10,
+            }}>
+            Verify
+          </Button>
+        </View>
       </View>
-    </View>
+    </WithLoader>
   );
 };
 

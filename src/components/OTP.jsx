@@ -1,27 +1,26 @@
 import React, {useState, useRef} from 'react';
 import {View, TextInput, StyleSheet} from 'react-native';
-import { COLORS } from '../theme';
+import {COLORS} from '../theme';
+import useLoading from '../hooks/useLoading';
 
-const OTP = () => {
-  const [otp, setOTP] = useState(['', '', '', '']);
+const OTP = ({otp, setOTP}) => {
   const inputRefs = useRef([]);
 
   const handleOTPChange = (index, value) => {
-    if (value.length > 1) {
-      value = value[value.length - 1];
+    console.log(`${index} -> ${value} -> ${otp[index]}`);
+    if (value !== otp[index]) {
+      const newOTP = [...otp];
+      newOTP[index] = value;
+      setOTP(newOTP);
     }
 
-    const newOTP = [...otp];
-    newOTP[index] = value;
-    setOTP(newOTP);
-
-    if (value && index < otp.length - 1) {
+    if (index < 3 && value !== '') {
       inputRefs.current[index + 1].focus();
     }
   };
 
   const handleOTPKeyPress = (index, key) => {
-    if (key === 'Backspace' && !otp[index] && index > 0) {
+    if (key === 'Backspace' && index > 0) {
       inputRefs.current[index - 1].focus();
     }
   };
@@ -36,9 +35,9 @@ const OTP = () => {
           value={digit}
           onChangeText={value => handleOTPChange(index, value)}
           onKeyPress={({nativeEvent: {key}}) => handleOTPKeyPress(index, key)}
-          maxLength={1}
           keyboardType="numeric"
-          placeholder='-'
+          maxLength={1}
+          placeholder="-"
         />
       ))}
     </View>
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     textAlign: 'center',
     fontSize: 20,
-    borderColor: COLORS.textTertiary
+    borderColor: COLORS.textTertiary,
   },
 });
 

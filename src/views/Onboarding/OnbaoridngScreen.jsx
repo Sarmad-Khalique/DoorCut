@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {COLORS} from '../../theme';
 import Skip from '../../components/shared/SkipButton';
@@ -7,16 +7,42 @@ import OnboardingPrimary from './OnboardingPrimary';
 import OnboardingSecondary from './OnboardingSecondary';
 import OnboardingTertiary from './OnboardingTertiary';
 import RoleSelection from './RoleSelection';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 
 const OnboardingScreen = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const showOnboarding = async () => {
+      const value = await AsyncStorage.getItem('onboarding');
+      if (value !== null) {
+        setCurrentStep(3);
+      }
+    };
+    showOnboarding();
+  }, []);
+
+  React.useEffect(() => {
+    if (currentStep === 3) {
+      AsyncStorage.setItem('onboarding', 'true');
+    }
+  }, [currentStep]);
 
   return currentStep === 3 ? (
     <RoleSelection />
   ) : (
     <View style={styles.container}>
-      <Skip onClick={() => setCurrentStep(3)} />
-      <ScrollView>
+      <Skip
+        onClick={() => {
+          setCurrentStep(3);
+        }}
+      />
+      <ScrollView
+        style={{
+          marginBottom: '20%',
+        }}>
         {currentStep === 0 ? (
           <OnboardingPrimary />
         ) : currentStep === 1 ? (
