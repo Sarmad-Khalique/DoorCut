@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   Touchable,
@@ -11,13 +12,17 @@ import Button from '../../components/shared/Button';
 import {COLORS} from '../../theme';
 import {Barber, ClientActive, BarberActive, Client} from '../../constants';
 import {useNavigation} from '@react-navigation/native';
+import {AuthContext} from '../../context/auth/auth.provider';
 
 const RoleSelection = () => {
   const [role, setRole] = useState('client');
+
+  const {setSelectedRole} = useContext(AuthContext);
+
   const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      <View style={styles.mainContent}>
+      <ScrollView style={styles.mainContent}>
         <View style={styles.header}>
           <Text style={styles.heading}>Who you are</Text>
           <Text style={styles.subHeading}>
@@ -77,9 +82,15 @@ const RoleSelection = () => {
             style={styles.image}
           />
         </TouchableOpacity>
-      </View>
+      </ScrollView>
       <View style={styles.buttonView}>
-        <Button onClick={() => navigation.navigate('Login')}>Continue</Button>
+        <Button
+          onClick={() => {
+            setSelectedRole(role);
+            navigation.navigate('Login');
+          }}>
+          Continue
+        </Button>
       </View>
     </View>
   );

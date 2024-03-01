@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import {ArrowLeftPrimary, ArrowRightPrimary} from '../../constants';
+import { COLORS } from '../../theme';
 
 const StepProgress = ({currentStep, setCurrentStep}) => {
   return (

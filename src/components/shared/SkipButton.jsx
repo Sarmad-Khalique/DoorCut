@@ -25,10 +25,11 @@ export default SkipButton;
 
 const styles = StyleSheet.create({
   container: {
-    height: '5%',
+    height: '12%',
     width: '100%',
     position: 'absolute',
     top: 0,
     paddingHorizontal: 5,
+    zIndex: 999
   },
 });
